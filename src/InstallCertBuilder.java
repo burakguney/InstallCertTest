@@ -14,7 +14,7 @@ public class InstallCertBuilder {
 
     public static void main(String[] args) throws Exception {
 
-        InstallCert("self-signed.badssl.com", "badssl.jks", -1);
+        InstallCert("localhost", "testssl.jks", 8000);
 
     }
 
