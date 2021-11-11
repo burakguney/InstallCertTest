@@ -4,6 +4,7 @@ import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Scanner;
 
 /**
  * Class used to add the server's certificate to the KeyStore with your trusted
@@ -14,22 +15,32 @@ public class InstallCertBuilder {
 
     public static void main(String[] args) throws Exception {
 
-        InstallCert("localhost", "testssl.jks", 8000);
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("-------SSL Certificate Installer---------");
+
+        System.out.println("Enter HOST (e.g self-signed.badssl.com) :: ");
+        String host = scanner.nextLine();
+
+        System.out.println("Enter File Name (e.g badssl.jks) :: ");
+        String fileName = scanner.nextLine();
+
+        System.out.println("Enter PORT (e.g 443) :: ");
+        int port = scanner.nextInt();
+
+        System.out.println("Enter Password (e.g changeit) :: ");
+        String password = scanner.nextLine();
+
+        scanner.nextLine();
+
+        scanner.close();
+
+        installCert(host, fileName, port, password);
 
     }
 
-    public static void InstallCert(String certUrl, String fileName, int port) throws Exception {
+    public static void installCert(String host, String fileName, int port, String password) throws Exception {
 
-        String host = certUrl;
-        char[] passphrase = null;
-
-        if (port == -1) {
-            port = 443;
-        }
-
-        if (passphrase == null) {
-            passphrase = "changeit".toCharArray();
-        }
+        char[] passphrase = password.toCharArray();
 
         File file = new File(fileName);
         file.createNewFile();
@@ -39,12 +50,9 @@ public class InstallCertBuilder {
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 
         try {
-
             ks.load(in, passphrase);
             in.close();
-
         } catch (Exception e) {
-
             ks.load(null, passphrase);
         }
 
@@ -67,17 +75,13 @@ public class InstallCertBuilder {
             socket.startHandshake();
             socket.close();
             System.out.println();
-            System.out.println("No errors, certificate is already trusted");
+            System.out.println("Certificate is already trusted.");
         } catch (SSLException e) {
-            System.out.println();
-            e.printStackTrace(System.out);
-
             X509Certificate[] chain = tm.chain;
             if (chain == null) {
-                System.out.println("Could not obtain server certificate chain");
+                System.out.println("Could not obtain server certificate chain.");
                 return;
             }
-
             System.out.println();
             System.out.println("Server sent " + chain.length + " certificate(s):");
             System.out.println();
@@ -93,17 +97,13 @@ public class InstallCertBuilder {
                 System.out.println("   md5     " + toHexString(md5.digest()));
                 System.out.println();
             }
-
             int k = 0;
-
             X509Certificate cert = chain[k];
             String alias = host + "-" + (k + 1);
             ks.setCertificateEntry(alias, cert);
-
             OutputStream out = new FileOutputStream(file);
             ks.store(out, passphrase);
             out.close();
-
             System.out.println();
             System.out.println(cert);
         }
